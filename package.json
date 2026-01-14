@@ -14,7 +14,7 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "test": "jest",
-    "build": "docker build -t mohammedfaisaliqbal//node-app .",
+    "build": "docker build -t mohammedfaisaliqbal/node-app .",
     "push": "docker push mohammedfaisaliqbal/node-app"
   },
   "dependencies": {
