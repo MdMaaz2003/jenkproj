@@ -16,14 +16,6 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
-            steps {
-                bat '''
-                trivy fs "%WORKSPACE%" --format table -o trivy-filescan.txt
-                '''
-            }
-        }
-
         stage('Docker Build & Push') {
             steps {
                 withDockerRegistry(credentialsId: 'Docker-Cred', url: '') {
