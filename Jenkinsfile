@@ -1,54 +1,62 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME     = "demo-app"
+        DOCKERHUB_REPO = "mohdmaaz777/demo-app"
+    }
+
     stages {
 
-        stage('Git-Checkout') {
+        stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/MdMaaz2003/jenkproj.git'
+                checkout scm
             }
         }
 
-        stage('Install') {
-            steps {
-                bat 'npm install'
-            }
-        }
-
-        stage('Trivy Scan') {
+        stage('Package') {
             steps {
                 bat '''
-                trivy fs "%WORKSPACE%" --format table -o trivy-filescan.txt
-                dir
+                mvn clean package -DskipTests
                 '''
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build') {
+            steps {
+                bat '''
+                docker build -t %IMAGE_NAME%:latest .
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
             steps {
                 withDockerRegistry(credentialsId: 'Docker-Cred', url: '') {
                     bat '''
-                    docker build -t mohdmaaz777/nodeproject .
-                    docker push mohdmaaz777/nodeproject
+                    docker tag %IMAGE_NAME%:latest %DOCKERHUB_REPO%:latest
+                    docker push %DOCKERHUB_REPO%:latest
                     '''
                 }
             }
         }
 
-        stage('Deploy') {
-            input {
-                message "Approve Deployment to PROD?"
-                ok "Deploy"
-            }
+        stage('Deploy with Docker Compose') {
             steps {
                 bat '''
-                docker stop node-app || exit 0
-                docker rm node-app || exit 0
-                docker run -d -p 3000:3000 --name node-app mohdmaaz777/nodeproject
+                docker compose down || exit 0
+                docker compose up -d --build
                 '''
             }
         }
     }
-}
 
+    post {
+        success {
+            echo "Application built, pushed, and deployed successfully"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
+    }
+}
