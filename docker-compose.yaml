@@ -2,12 +2,6 @@ version: '3.9'
 
 services:
   web:
-    image: 'jaydeep007docker/my-node-app:latest'
+    image: mohdmaaz777/my-node-app:latest
     ports:
       - "8000:3000"
-
-
-
-
-
-# To run this docker-compose file, use the command:

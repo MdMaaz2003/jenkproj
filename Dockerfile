@@ -1,15 +1,12 @@
+FROM node:18-alpine
 
-# ---- Build Stage ----
-    FROM node:20-alpine AS builder
-    WORKDIR /app
-    COPY package*.json ./
-    RUN npm ci 
-    COPY . .
-    
-    # ---- Runtime Stage ----
-    FROM node:20-alpine
-    WORKDIR /app
-    COPY --from=builder /app .
-    EXPOSE 3000
-    CMD ["npm", "start"]
-    
+WORKDIR /home/node/app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "app.js"]
