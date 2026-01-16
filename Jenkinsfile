@@ -28,10 +28,6 @@ pipeline {
         }
 
         stage('Deploy with Docker Compose') {
-            input {
-                message "Approve Deployment to PROD?"
-                ok "Deploy"
-            }
             steps {
                 bat '''
                 docker compose down || exit 0
