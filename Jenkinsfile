@@ -1,62 +1,51 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME     = "demo-app"
-        DOCKERHUB_REPO = "mohdmaaz777/demo-app"
-    }
-
     stages {
 
-        stage('Checkout') {
+        stage('Git-Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/MdMaaz2003/jenkproj.git'
             }
         }
 
-        stage('Package') {
+        stage('Install') {
+            steps {
+                bat 'npm install'
+            }
+        }
+
+        stage('Trivy Scan') {
             steps {
                 bat '''
-                mvn clean package -DskipTests
+                trivy fs "%WORKSPACE%" --format table -o trivy-filescan.txt
                 '''
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                bat '''
-                docker build -t %IMAGE_NAME%:latest .
-                '''
-            }
-        }
-
-        stage('Push Docker Image') {
+        stage('Docker Build & Push') {
             steps {
                 withDockerRegistry(credentialsId: 'Docker-Cred', url: '') {
                     bat '''
-                    docker tag %IMAGE_NAME%:latest %DOCKERHUB_REPO%:latest
-                    docker push %DOCKERHUB_REPO%:latest
+                    docker build -t mohdmaaz777/my-node-app .
+                    docker push mohdmaaz777/my-node-app
                     '''
                 }
             }
         }
 
         stage('Deploy with Docker Compose') {
+            input {
+                message "Approve Deployment to PROD?"
+                ok "Deploy"
+            }
             steps {
                 bat '''
                 docker compose down || exit 0
-                docker compose up -d --build
+                docker compose up -d
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Application built, pushed, and deployed successfully"
-        }
-        failure {
-            echo "Pipeline failed"
         }
     }
 }
